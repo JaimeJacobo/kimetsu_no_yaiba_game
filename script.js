@@ -16,11 +16,13 @@ class Player {
     this.runImagesInterval = "";
     this.actions = [];
     this.jumping = false;
+    this.attacking = false;
   }
 
   getRunImages() {
     this.runImagesInterval = setInterval(() => {
       if (this.runImage === images.run1) {
+        this.width = 65;
         this.runImage = images.run2;
       } else if (this.runImage === images.run2) {
         this.runImage = images.run3;
@@ -30,12 +32,10 @@ class Player {
         this.runImage = images.run1;
       }
       this.image = this.runImage;
-      this.width = 65;
     }, 60);
   }
 
   getJumpImages() {
-    this.width = 68;
     this.image = images.jump1;
     setTimeout(() => {
       this.image = images.jump2;
@@ -47,8 +47,7 @@ class Player {
     //   this.image = images.jump4;
     // }, 600);
     setTimeout(() => {
-      player.actions = player.actions.filter((action) => action !== "jump");
-      this.width = 50;
+      this.actions = this.actions.filter((action) => action !== "jump");
     }, 750);
   }
 
@@ -62,9 +61,8 @@ class Player {
       this.image = images.attack3;
     }, 230);
     setTimeout(() => {
-      this.image = images.stand;
-      this.width = 50;
-      player.actions = player.actions.filter((action) => action !== "attack");
+      this.actions = this.actions.filter((action) => action !== "attack");
+      this.attacking = false;
     }, 280);
   }
 
@@ -78,7 +76,8 @@ class Player {
         clearInterval(gravity);
         this.y = 400;
         this.speedY = 0;
-        player.jumping = false;
+        this.jumping = false;
+        this.actions = this.actions.filter((action) => action !== "jump");
       }
     }, 50);
   }
@@ -104,6 +103,7 @@ let startGame = false;
 
 const images = {};
 const imagesInfo = [
+  { url: "backgrounds/day.jpeg", title: "backgroundDay" },
   { url: "1614870923357.png", title: "stand" },
   { url: "1614873424949.png", title: "example" },
   { url: "1614873016362.png", title: "run1" },
@@ -113,7 +113,6 @@ const imagesInfo = [
   { url: "1614873612743.png", title: "attack1" },
   { url: "1614873641521.png", title: "attack2" },
   { url: "1614873680021.png", title: "attack3" },
-  { url: "backgrounds/day.jpeg", title: "backgroundDay" },
   { url: "1614873109599.png", title: "jump1" },
   { url: "1614873132252.png", title: "jump2" },
   { url: "1614873162993.png", title: "jump3" },
@@ -124,10 +123,6 @@ const imagesInfo = [
 for (let i = 0; i < imagesInfo.length; i++) {
   const img = new Image();
   img.src = `images/${imagesInfo[i].url}`;
-  if (img.src.includes("background")) {
-    const ptrn = ctx.createPattern(img, "repeat");
-    ctx.fillStyle = ptrn;
-  } //Esto hay que echarle un ojo
   img.onload = () => {
     counterForImages++;
     images[imagesInfo[i].title] = img;
@@ -157,10 +152,38 @@ const checkForRunningOutbounds = () => {
   }
 };
 
-const updatePlayer = () => {
+let keyBoolean = true;
+
+const checkForActualImage = () => {
   if (!player.actions.length) {
     player.image = images.stand;
+    player.width = 50;
   }
+  if (player.actions.includes("move-right")) {
+    player.speedX = 5;
+  }
+  if (player.actions.includes("move-left")) {
+    player.speedX = -5;
+  }
+  if (player.actions.includes("attack") && !player.attacking) {
+    player.attacking = true;
+    player.attack();
+  }
+  if (
+    player.actions.includes("move-right") &&
+    !player.actions.includes("jump") &&
+    !player.attacking
+  ) {
+    if (keyBoolean) {
+      player.getRunImages();
+      keyBoolean = false;
+    }
+  }
+};
+
+const updatePlayer = () => {
+  checkForActualImage();
+
   checkForRunningOutbounds();
   player.x += player.speedX;
   player.y += player.speedY;
@@ -220,62 +243,62 @@ const loadAudio = () => {
 
 //Keyboard event listener
 
-let keyBoolean = false;
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "ArrowRight") {
-    player.actions.push("move-right");
-    player.speedX = 5;
-    if (keyBoolean) {
-      player.getRunImages();
+window.onload = () => {
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowRight") {
+      if (!player.actions.includes("move-right")) {
+        player.actions.push("move-right");
+      }
+    } else if (event.key === "ArrowLeft") {
+      player.actions.push("move-left");
+    } else if (event.key === "a") {
+      player.actions.push("attack");
+    } else if (event.key === " " && !player.jumping) {
+      player.width = 68;
+      player.jumping = true;
+      player.actions.push("jump");
+      player.jump();
     }
-  } else if (event.key === "ArrowLeft") {
-    player.actions.push("move-left");
-    player.speedX = -5;
-  } else if (event.key === "a") {
-    player.actions.push("attack");
-    player.attack();
-  } else if (event.key === " " && !player.jumping) {
-    player.jumping = true;
-    player.actions.push("jump");
-    player.jump();
-  }
-  console.log(player.actions);
-  keyBoolean = false;
-});
+  });
 
-document.addEventListener("keyup", (event) => {
-  if (event.key === "ArrowRight") {
-    player.actions = player.actions.filter((action) => action !== "move-right");
-  } else if (event.key === "ArrowLeft") {
-    player.actions = player.actions.filter((action) => action !== "move-left");
-  }
-  const events = ["ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft"];
-  if (events.includes(event.key)) {
-    player.speedX = 0;
-    player.width = 50;
-  }
-  clearInterval(player.runImagesInterval);
-  keyBoolean = true;
-});
-
-let eventCounter = 0;
-document.querySelector(".switch").addEventListener("click", (event) => {
-  eventCounter++;
-  if (eventCounter === 2) {
-    if (musicActivated) {
-      audio.pause();
-    } else {
-      audio.play();
+  document.addEventListener("keyup", (event) => {
+    if (event.key === "ArrowRight") {
+      player.actions = player.actions.filter(
+        (action) => action !== "move-right"
+      );
+    } else if (event.key === "ArrowLeft") {
+      player.actions = player.actions.filter(
+        (action) => action !== "move-left"
+      );
     }
-    musicActivated = !musicActivated;
-    eventCounter = 0;
-  }
-});
+    const events = ["ArrowUp", "ArrowDown", "ArrowRight", "ArrowLeft"];
+    if (events.includes(event.key)) {
+      player.speedX = 0;
+    }
+    clearInterval(player.runImagesInterval);
+    keyBoolean = true;
+  });
 
-document.getElementById("start-game").addEventListener("click", () => {
-  audio.play();
-});
+  let eventCounter = 0;
+  document.querySelector(".switch").addEventListener("click", (event) => {
+    eventCounter++;
+    if (eventCounter === 2) {
+      if (musicActivated) {
+        audio.pause();
+      } else {
+        audio.play();
+      }
+      musicActivated = !musicActivated;
+      eventCounter = 0;
+    }
+  });
+
+  document.getElementById("start-game").addEventListener("click", () => {
+    document.querySelector("canvas").classList.remove("display-none");
+    document.querySelector("canvas").classList.add("display-block");
+    document.querySelector(".main-poster").classList.add("display-none");
+  });
+};
 
 //Update Canvas Function
 const updateCanvas = () => {

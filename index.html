@@ -8,15 +8,21 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <canvas id="main" width="1200" height="600"></canvas>
-
-    <button id="start-game">Start game</button>
-    <div>
-      <p>Music</p>
-      <label class="switch">
-        <input type="checkbox" checked />
-        <span class="slider round"></span>
-      </label>
+    <div class="flex-centered">
+      <img
+        class="main-poster display-none"
+        src="./images//main_poster.jpeg"
+        alt="Main Poster - Kimetsu No Yaiba"
+      />
+      <canvas id="main" width="1200" height="600"></canvas>
+      <button id="start-game">Start game</button>
+      <div>
+        <p>Music</p>
+        <label class="switch">
+          <input type="checkbox" checked />
+          <span class="slider round"></span>
+        </label>
+      </div>
     </div>
 
     <script src="./script.js"></script>
