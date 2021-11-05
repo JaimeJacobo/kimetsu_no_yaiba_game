@@ -127,7 +127,7 @@ class Fireball {
     this.y = Math.floor(Math.random() * (100 - 0 + 1) + 0);
     this.speedX = randomNumber(-5, -7);
     this.doubleSpeedX = this.speedX - 5;
-    this.speedY = randomNumber(2, 4);
+    this.speedY = randomNumber(2, 6);
     this.doubleSpeedY = this.speedY + 5;
     this.width = 70;
     this.height = 70;
@@ -231,7 +231,6 @@ const checkForActualImage = () => {
   if (player.actions.includes("hit")) {
     player.speedX = 0;
   } else {
-    console.log(player.actions);
     if (!player.actions.length) {
       player.image = images.stand;
       player.width = 50;
@@ -301,7 +300,6 @@ const updatePlayer = () => {
 };
 
 const drawPlayer = (image) => {
-  // ctx.drawImage(image, player.x, player.y, player.width, player.height);
   if (!player.injured) {
     ctx.drawImage(image, player.x, player.y, player.width, player.height);
   } else {
@@ -318,7 +316,7 @@ const createFireballs = () => {
   const prueba = setInterval(() => {
     const fireball = new Fireball();
     fireballs.push(fireball);
-  }, 2000);
+  }, randomNumber(1000, 3000));
   creatingFireballs = true;
 };
 
@@ -353,10 +351,19 @@ const drawFireballs = () => {
 
 const checkforCollisions = () => {
   fireballs.forEach((fireball) => {
-    const bothInX = fireball.x - 50 < player.x && fireball.x > player.x;
-    const bothInY = fireball.y - 70 < player.y && fireball.y > player.y;
+    const rightImpact = fireball.x < player.x + 30;
+    const leftImpact = fireball.x > player.x - 30;
+    const upperImpact = fireball.y < player.y + 30;
+    const lowerImpact = fireball.y > player.y - 30;
 
-    if (bothInX && bothInY && !fireball.impact) {
+    if (
+      rightImpact &&
+      leftImpact &&
+      upperImpact &&
+      lowerImpact &&
+      !fireball.impact
+    ) {
+      // console.log("impacto");
       fireball.impact = true;
       player.actions.push("hit");
       player.hit();
